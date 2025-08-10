@@ -5,86 +5,110 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>6ボタン画像切替＋音声再生</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 20px;
+  body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background:#f0f0f0; }
+  h1 { margin-bottom: 20px; }
+  .buttons {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px;
   }
-  button {
-    font-size: 18px;
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
+  .buttons button {
+    border: none; color: white; padding: 15px 20px; font-size: 16px; cursor: pointer;
+    border-radius: 8px; flex: 1 1 calc(33% - 20px); min-width: 140px;
   }
-  #imageContainer {
-    position: relative;
-    display: inline-block;
-    margin-top: 20px;
-  }
-  #displayImage {
-    max-width: 300px;
-    display: none;
-  }
+  /* 6色 */
+  .btn-a { background:#e74c3c; }  /* 赤 */
+  .btn-b { background:#e67e22; }  /* オレンジ */
+  .btn-c { background:#f1c40f; color:#333; } /* 黄（可読性のため文字色濃く） */
+  .btn-d { background:#2ecc71; }  /* 緑 */
+  .btn-e { background:#3498db; }  /* 青 */
+  .btn-f { background:#9b59b6; }  /* 紫 */
+
+  /* 表示エリア */
+  #imageContainer { position: relative; display: inline-block; margin-top: 10px; background:#fff;
+    border:3px solid #ccc; border-radius:10px; padding:10px; }
+  #displayImage { max-width: 80vw; height: auto; display: none; }
   #closeButton {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: black;
-    color: white;
-    border: none;
-    font-size: 16px;
-    padding: 4px 8px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: none;
+    position: absolute; top: 6px; right: 6px; background:#000; color:#fff; border:none;
+    font-size: 16px; line-height: 1; padding: 6px 10px; border-radius: 50%; cursor: pointer; display: none;
   }
 </style>
 </head>
 <body>
 
-<h1>画像＋音声再生ボタン</h1>
+<h1>6ボタン画像切替＋音声再生</h1>
 
-<!-- ボタン群 -->
-<button style="background-color: red;" onclick="showImageAndPlay('imageA.png','audioA.mp3')">よくやった</button>
-<button style="background-color: orange;" onclick="showImageAndPlay('imageB.png','audioB.mp3')">よかったよ</button>
-<button style="background-color: yellow; color: black;" onclick="showImageAndPlay('imageC.png','audioC.mp3')">その調子で頑張ろう</button>
-<button style="background-color: green;" onclick="showImageAndPlay('imageD.png','audioD.mp3')">次があるよ</button>
-<button style="background-color: blue;" onclick="showImageAndPlay('imageE.mp3','audioE.mp3')">失敗して気づくことがあるよ</button>
-<button style="background-color: purple;" onclick="showImageAndPlay('imageF.png','audioF.mp3')">あなたならできる</button>
-
-<!-- 画像表示エリア -->
-<div id="imageContainer">
-  <img id="displayImage" src="" alt="表示画像">
-  <button id="closeButton" onclick="hideImage()">×</button>
+<div class="buttons" id="btns">
+  <button class="btn-a" data-letter="A">よくやった</button>
+  <button class="btn-b" data-letter="B">よかったよ</button>
+  <button class="btn-c" data-letter="C">その調子で頑張ろう</button>
+  <button class="btn-d" data-letter="D">次があるよ</button>
+  <button class="btn-e" data-letter="E">失敗して気づくことがあるよ</button>
+  <button class="btn-f" data-letter="F">あなたならできる</button>
 </div>
 
+<div id="imageContainer">
+  <img id="displayImage" alt="表示画像">
+  <button id="closeButton" aria-label="閉じる" title="閉じる">×</button>
+</div>
+
+<!-- 事前読み込み（安定再生用） -->
+<audio id="audioA" preload="auto" src="soundA.mp3"></audio>
+<audio id="audioB" preload="auto" src="soundB.mp3"></audio>
+<audio id="audioC" preload="auto" src="soundC.mp3"></audio>
+<audio id="audioD" preload="auto" src="soundD.mp3"></audio>
+<audio id="audioE" preload="auto" src="soundE.mp3"></audio>
+<audio id="audioF" preload="auto" src="soundF.mp3"></audio>
+
 <script>
-  let hideTimeout;
+const map = {
+  A:{img:'imageA.png', snd:'soundA.mp3'},
+  B:{img:'imageB.png', snd:'soundB.mp3'},
+  C:{img:'imageC.png', snd:'soundC.mp3'},
+  D:{img:'imageD.png', snd:'soundD.mp3'},
+  E:{img:'imageE.png', snd:'soundE.mp3'},
+  F:{img:'imageF.png', snd:'soundF.mp3'}
+};
 
-  function showImageAndPlay(imageFile, audioFile) {
-    const img = document.getElementById('displayImage');
-    const closeBtn = document.getElementById('closeButton');
-    img.src = imageFile;
-    img.style.display = 'block';
-    closeBtn.style.display = 'block';
+let hideTimer = null;
 
-    // 音声再生
-    const audio = new Audio(audioFile);
-    audio.play();
-
-    // 前のタイマー解除
-    clearTimeout(hideTimeout);
-    // 30秒後に非表示
-    hideTimeout = setTimeout(hideImage, 30000);
+function show(letter){
+  // 音声（既存audioを再利用）
+  const au = document.getElementById('audio'+letter);
+  if (au){
+    try { au.currentTime = 0; } catch(e){}
+    au.play().catch(()=>{});
   }
 
-  function hideImage() {
-    document.getElementById('displayImage').style.display = 'none';
-    document.getElementById('closeButton').style.display = 'none';
-  }
+  // 画像表示（キャッシュ回避）
+  const img = document.getElementById('displayImage');
+  const closeBtn = document.getElementById('closeButton');
+  img.src = map[letter].img + '?t=' + Date.now();
+  img.style.display = 'block';
+  closeBtn.style.display = 'inline-block';
+
+  // 30秒後に自動非表示
+  if (hideTimer) clearTimeout(hideTimer);
+  hideTimer = setTimeout(hideImage, 30000);
+}
+
+function hideImage(){
+  const img = document.getElementById('displayImage');
+  const closeBtn = document.getElementById('closeButton');
+  img.style.display = 'none';
+  img.src = '';
+  closeBtn.style.display = 'none';
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+}
+
+// ボタンイベント委譲
+document.getElementById('btns').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-letter]');
+  if (!b) return;
+  const letter = b.dataset.letter;
+  show(letter);
+});
+
+// ×ボタン
+document.getElementById('closeButton').addEventListener('click', hideImage);
 </script>
 
 </body>
