@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6ボタン音声＋画像切り替え</title>
+<title>6ボタン音声＋画像切り替え（30秒自動非表示）</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -12,9 +12,7 @@
     margin: 0;
     padding: 20px;
   }
-  h1 {
-    margin-bottom: 20px;
-  }
+  h1 { margin-bottom: 20px; }
   .buttons {
     display: flex;
     flex-wrap: wrap;
@@ -32,14 +30,25 @@
     flex: 1 1 calc(33% - 20px);
     min-width: 120px;
   }
-  #displayImage {
-    max-width: 80%;
-    height: auto;
+  #frame {
+    display: inline-block;
+    padding: 10px;
+    background: #fff;
     border: 3px solid #ccc;
     border-radius: 10px;
-    background-color: white;
-    padding: 10px;
   }
+  #displayImage {
+    max-width: 80vw;
+    height: auto;
+    display: none; /* 初期は非表示 */
+  }
+  /* ボタンごとの色 */
+  .btn-a { background-color: #e74c3c; } /* A: 赤 */
+  .btn-b { background-color: #e67e22; } /* B: オレンジ */
+  .btn-c { background-color: #f1c40f; } /* C: 黄 */
+  .btn-d { background-color: #2ecc71; } /* D: 緑 */
+  .btn-e { background-color: #3498db; } /* E: 青 */
+  .btn-f { background-color: #9b59b6; } /* F: 紫 */
 </style>
 </head>
 <body>
@@ -47,21 +56,39 @@
 <h1>6ボタン音声＋画像切り替え</h1>
 
 <div class="buttons">
-  <button style="background-color:#e74c3c" onclick="playSound('soundA.mp3','imageA.png')">よくやった</button>
-  <button style="background-color:#e67e22" onclick="playSound('soundB.mp3','imageB.png')">よかったよ</button>
-  <button style="background-color:#f1c40f" onclick="playSound('soundC.mp3','imageC.png')">その調子で頑張ろう</button>
-  <button style="background-color:#2ecc71" onclick="playSound('soundD.mp3','imageD.png')">次があるよ</button>
-  <button style="background-color:#3498db" onclick="playSound('soundE.mp3','imageE.png')">失敗して気づくことがあるよ</button>
-  <button style="background-color:#9b59b6" onclick="playSound('soundF.mp3','imageF.png')">あなたならできる</button>
+  <button class="btn-a" onclick="play('soundA.mp3','imageA.png')">よくやった</button>
+  <button class="btn-b" onclick="play('soundB.mp3','imageB.png')">よかったよ</button>
+  <button class="btn-c" onclick="play('soundC.mp3','imageC.png')">その調子で頑張ろう</button>
+  <button class="btn-d" onclick="play('soundD.mp3','imageD.png')">次があるよ</button>
+  <button class="btn-e" onclick="play('soundE.mp3','imageE.png')">失敗して気づくことがあるよ</button>
+  <button class="btn-f" onclick="play('soundF.mp3','imageF.png')">あなたならできる</button>
 </div>
 
-<img id="displayImage" src="imageA.png" alt="表示画像">
+<div id="frame">
+  <img id="displayImage" alt="表示画像">
+</div>
 
 <script>
-function playSound(soundFile, imageFile) {
-  let audio = new Audio(soundFile);
-  audio.play();
-  document.getElementById('displayImage').src = imageFile;
+let hideTimer = null;
+
+function play(soundFile, imageFile) {
+  // 音声再生
+  try {
+    const audio = new Audio(soundFile);
+    audio.play();
+  } catch (e) {}
+
+  // 画像表示（キャッシュ回避クエリを付与）
+  const img = document.getElementById('displayImage');
+  img.src = imageFile + '?t=' + Date.now();
+  img.style.display = 'block';
+
+  // 既存タイマーをリセットして 30 秒後に非表示
+  if (hideTimer) clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    img.style.display = 'none';
+    img.src = ''; // メモリ解放と意図せぬ再表示防止
+  }, 30000);
 }
 </script>
 
